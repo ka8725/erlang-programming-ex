@@ -1,5 +1,5 @@
 -module(shapes).
--export ([area/1]).
+-export([area/1]).
 
 area({square, Side}) ->
   Side * Side ;
