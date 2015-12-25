@@ -1,6 +1,6 @@
 -module(test).
 -export([sum/1, sum/2, create/1, reverse_create/1, print1/1, print2/1,
-         filter/2, reverse/1, concatenate/1, flatten/1, qsort/1]).
+         filter/2, reverse/1, concatenate/1, flatten/1, qsort/1, msort/1, divide2/1]).
 
 sum(0) -> 0;
 sum(N) -> N + sum(N - 1).
@@ -82,3 +82,44 @@ qsort([]) ->
 qsort([H|L]) ->
   [Lesser|Bigger] = divide_to_lesser_and_bigger(L, H),
   concatenate([qsort(Lesser), H, qsort(Bigger)]).
+
+len(List) ->
+  len(List, 0).
+
+len([], Len) ->
+  Len;
+len([_|L], Len) ->
+  len(L, Len + 1).
+
+divide2(List) ->
+  slice(List, len(List) div 2, 0, [[]]).
+
+slice([H|L], By, Index, [AccH|AccL]) when Index < By ->
+  slice(L, By, Index + 1, [[H|AccH]|AccL]);
+slice([H|L], By, Index, [AccH|AccL]) when Index >= By ->
+  slice(L, By, Index + 1, [AccH|[H|AccL]]);
+slice([], _, _, Acc) ->
+  [H|L] = Acc,
+  [reverse(H)|reverse(L)].
+
+msort([]) ->
+  [];
+msort([H|[]]) ->
+  [H];
+msort(List) ->
+  [H|L] = divide2(List),
+  msort(qsort(H), qsort(L)).
+
+msort(List1, List2) ->
+  msort(List1, List2, []).
+
+msort([H1|L1], [H2|L2], Acc) when H1 < H2 ->
+  msort(L1, [H2|L2], [H1|Acc]);
+msort([H1|L1], [H2|L2], Acc) when H2 =< H1 ->
+  msort([H1|L1], L2, [H2|Acc]);
+msort([H1|L1], [], Acc) ->
+  msort(L1, [], [H1|Acc]);
+msort([], [H2|L2], Acc) ->
+  msort([], L2, [H2|Acc]);
+msort([], [], Acc) ->
+  reverse(Acc).
