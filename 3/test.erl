@@ -108,7 +108,7 @@ msort([H|[]]) ->
   [H];
 msort(List) ->
   [H|L] = divide2(List),
-  msort(qsort(H), qsort(L)).
+  msort(msort(H), msort(L)).
 
 msort(List1, List2) ->
   msort(List1, List2, []).
