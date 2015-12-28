@@ -2,17 +2,18 @@
 -export([parse/1, evaluate/1, eval/1]).
 
 eval(S) ->
-  Parse = parse(S),
-  [Clause|ThenAndElse] = Parse,
-  [Then|Else] = ThenAndElse,
-  IsTrue = evaluate(Clause  ) =:= 0,
+  evaluate(parse(S)).
+
+evaluate({if_, IfBody}) ->
+  evaluate(IfBody);
+evaluate({IfClause, {then_, {Then, {else_, Else}}}}) ->
+  ExecIf = evaluate(IfClause),
   if
-    IsTrue ->
+    ExecIf =:= 0 ->
       evaluate(Then);
     true ->
       evaluate(Else)
-  end.
-
+  end;
 evaluate({plus, Left, Right}) ->
   evaluate(Left) + evaluate(Right);
 evaluate({minus, Left, Right}) ->
@@ -29,10 +30,16 @@ evaluate({num, Num}) ->
 parse(S) ->
   parse_tokens(string:tokens(S, " ")).
 
+parse_tokens(["if"|L]) ->
+  {if_, parse_tokens(L)};
+parse_tokens(["then"|L]) ->
+  {then_, parse_tokens(L)};
+parse_tokens(["else"|L]) ->
+  {else_, parse_tokens(L)};
 parse_tokens([H|[]]) ->
   parse({}, H);
 parse_tokens([H|L]) ->
-  [parse({}, H)|parse_tokens(L)].
+  {parse({}, H), parse_tokens(L)}.
 
 parse(Acc, "") ->
   Acc;
