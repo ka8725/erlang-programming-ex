@@ -2,15 +2,23 @@
 -export([parse/1]).
 
 parse(S) ->
-  parse({}, S).
+  parse_tokens(string:tokens(S, " ")).
+
+parse_tokens([H|[]]) ->
+  parse({}, H);
+parse_tokens([H|L]) ->
+  {parse({}, H), parse_tokens(L)}.
 
 parse(Acc, "") ->
   Acc;
 parse(Acc, [Ch|L]) ->
   IsOp = is_op(Ch),
   IsDigit = is_digit(Ch),
-  IsOpenPar = is_open_par(Ch),
+  IsOpenPar = Ch =:= $(,
+  IsUnaryMinus = Ch =:= $~,
   if
+    IsUnaryMinus ->
+      {operation($-), parse(L)};
     IsDigit ->
       Num = {num, list_to_integer([Ch|""])},
       if
@@ -55,9 +63,6 @@ is_op(Ch) ->
 
 is_digit(Ch) ->
   lists:member(Ch, "0123456789").
-
-is_open_par(Ch) ->
-  Ch =:= $(.
 
 operation(Op) ->
   case Op of
