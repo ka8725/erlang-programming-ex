@@ -1,5 +1,30 @@
 -module(calc).
--export([parse/1]).
+-export([parse/1, evaluate/1, eval/1]).
+
+eval(S) ->
+  Parse = parse(S),
+  [Clause|ThenAndElse] = Parse,
+  [Then|Else] = ThenAndElse,
+  IsTrue = evaluate(Clause  ) =:= 0,
+  if
+    IsTrue ->
+      evaluate(Then);
+    true ->
+      evaluate(Else)
+  end.
+
+evaluate({plus, Left, Right}) ->
+  evaluate(Left) + evaluate(Right);
+evaluate({minus, Left, Right}) ->
+  evaluate(Left) - evaluate(Right);
+evaluate({minus, Exp}) ->
+  -evaluate(Exp);
+evaluate({divide, Left, Right}) ->
+  evaluate(Left) / evaluate(Right);
+evaluate({multiply, Left, Right}) ->
+  evaluate(Left) * evaluate(Right);
+evaluate({num, Num}) ->
+  Num.
 
 parse(S) ->
   parse_tokens(string:tokens(S, " ")).
@@ -7,9 +32,11 @@ parse(S) ->
 parse_tokens([H|[]]) ->
   parse({}, H);
 parse_tokens([H|L]) ->
-  {parse({}, H), parse_tokens(L)}.
+  [parse({}, H)|parse_tokens(L)].
 
 parse(Acc, "") ->
+  Acc;
+parse(Acc, "~n") ->
   Acc;
 parse(Acc, [Ch|L]) ->
   IsOp = is_op(Ch),
@@ -18,7 +45,7 @@ parse(Acc, [Ch|L]) ->
   IsUnaryMinus = Ch =:= $~,
   if
     IsUnaryMinus ->
-      {operation($-), parse(L)};
+      {operation($-), parse({}, L)};
     IsDigit ->
       Num = {num, list_to_integer([Ch|""])},
       if
@@ -38,16 +65,16 @@ parse(Acc, [Ch|L]) ->
       if
         PlusIndex > 0 ->
           {Left, Right} = divide(L, PlusIndex),
-          {operation($+), parse(Left), parse(Right)};
+          {operation($+), parse({}, Left), parse({}, Right)};
         MinusIndex > 0 ->
           {Left, Right} = divide(L, MinusIndex),
-          {operation($-), parse(Left), parse(Right)};
+          {operation($-), parse({}, Left), parse({}, Right)};
         DivIndex > 0 ->
           {Left, Right} = divide(L, DivIndex),
-          {operation($/), parse(Left), parse(Right)};
+          {operation($/), parse({}, Left), parse({}, Right)};
         MultIndex > 0 ->
           {Left, Right} = divide(L, MultIndex),
-          {operation($*), parse(Left), parse(Right)};
+          {operation($*), parse({}, Left), parse({}, Right)};
         true ->
           parse(Acc, L -- ")")
       end
