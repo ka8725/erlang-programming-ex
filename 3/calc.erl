@@ -1,5 +1,22 @@
 -module(calc).
--export([parse/1, evaluate/1, eval/1]).
+-export([parse/1, print/1, eval/1]).
+
+print({if_, IfBody}) ->
+  io:format("if ~ts~n", [print(IfBody)]);
+print({IfClause, {then_, {Then, {else_, Else}}}}) ->
+  io_lib:format("~ts then ~ts else ~ts", [print(IfClause), print(Then), print(Else)]);
+print({plus, Left, Right}) ->
+  io_lib:format("(~ts + ~ts)", [print(Left), print(Right)]);
+print({minus, Left, Right}) ->
+  io_lib:format("(~ts - ~ts)", [print(Left), print(Right)]);
+print({minus, Exp}) ->
+  io_lib:format("-~ts", [print(Exp)]);
+print({divide, Left, Right}) ->
+  io_lib:format("(~ts / ~ts)", [print(Left), print(Right)]);
+print({multiply, Left, Right}) ->
+  io_lib:format("(~ts * ~ts)", [print(Left), print(Right)]);
+print({num, Num}) ->
+  io_lib:format("~ts", [integer_to_list(Num)]).
 
 eval(S) ->
   evaluate(parse(S)).
