@@ -3,9 +3,8 @@
 
 start(N, M, Message) ->
   Pids = start_procs(N),
-  Ring = Pids ++ [hd(Pids)],
-  send_message(Ring, Ring, M, Message),
-  stop_ring(Ring).
+  send_message(Pids, Pids, M, Message),
+  stop_ring(Pids).
 
 start_procs(0) ->
   [];
@@ -24,7 +23,7 @@ start_proc() ->
 
 send_message(Ring, [Pid|[]], M, Message) ->
   ping(Pid, Message),
-  send_message(Ring, tl(Ring), M - 1, Message);
+  send_message(Ring, Ring, M - 1, Message);
 
 send_message(_, [Pid|_], 1, Message) ->
   ping(Pid, Message);
