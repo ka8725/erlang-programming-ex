@@ -13,30 +13,47 @@ start_procs(N) ->
 
 start_proc() ->
   receive
-    stop ->
+    {From, stop} ->
       io:format("~w: stopping...~n", [self()]),
+      ping(From, {self(), stopped}),
       true;
-    Msg ->
+    {From, Msg} ->
       io:format("~w: ~ts~n", [self(), Msg]),
+      ping(From, {self(), message_delivered}),
       start_proc()
   end.
 
+send_message(_, [Pid|[]], 1, Message) ->
+  wait_and_then_quit(Pid, Message);
 send_message(Ring, [Pid|[]], M, Message) ->
-  ping(Pid, Message),
-  send_message(Ring, Ring, M - 1, Message);
-
+  wait_and_then_send_message(Pid, Ring, Ring, M - 1, Message);
 send_message(_, [Pid|_], 1, Message) ->
-  ping(Pid, Message);
-
+  wait_and_then_quit(Pid, Message);
 send_message(Ring, [Pid|Pids], M, Message) ->
-  ping(Pid, Message),
-  send_message(Ring, Pids, M - 1, Message).
+  wait_and_then_send_message(Pid, Ring, Pids, M - 1, Message).
 
 ping(Pid, Message) ->
-  Pid ! Message.
+  Pid ! {self(), Message}.
 
 stop_ring([]) ->
   ok;
 stop_ring([Pid|Pids]) ->
   ping(Pid, stop),
-  stop_ring(Pids).
+  receive
+    {_, {Pid, stopped}} ->
+      stop_ring(Pids)
+  end.
+
+wait_and_then_send_message(Pid, Ring, Rest, M, Message) ->
+  ping(Pid, Message),
+  receive
+    {_, {Pid, message_delivered}} ->
+      send_message(Ring, Rest, M, Message)
+  end.
+
+wait_and_then_quit(Pid, Message) ->
+  ping(Pid, Message),
+  receive
+    {_, {Pid, message_delivered}} ->
+      ok
+  end.
